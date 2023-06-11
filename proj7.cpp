@@ -76,8 +76,9 @@ main( int argc, char *argv[ ] )
 	MPI_Comm_rank( MPI_COMM_WORLD, &me );
 
 	// decide how much data to send to each processor:
+    // typically this is NUMELEMENTS/NumCpus
 
-	PPSize    = ?????
+	PPSize = NUMELEMENTS / NumCpus;
 
 	// local arrays:
 
@@ -149,13 +150,15 @@ main( int argc, char *argv[ ] )
 			if( dst == BOSS )
 				continue;
 
-			MPI_Send( ?????, ?????, MPI_FLOAT, ?????, TAG_SCATTER, MPI_COMM_WORLD );
+            // The address of node dst's share of the data to send
+
+			MPI_Send( &BigSignal[dst*PPSize], PPSize, MPI_FLOAT, dst, TAG_SCATTER, MPI_COMM_WORLD );
 		}
 	}
 	else
 	{
 		// have everyone else receive from the BOSS:
-		MPI_Recv( ?????, ?????, MPI_FLOAT, ?????, TAG_SCATTER, MPI_COMM_WORLD, &status );
+		MPI_Recv( PPSignal, PPSize, MPI_FLOAT, BOSS, TAG_SCATTER, MPI_COMM_WORLD, &status );
 	}
 
 	// each processor does its own autocorrelation:
@@ -175,7 +178,7 @@ main( int argc, char *argv[ ] )
 	else
 	{
 		// each processor sends its sums back to the BOSS:
-		MPI_Send( ?????, ?????, MPI_FLOAT, ?????, TAG_GATHER, MPI_COMM_WORLD );
+		MPI_Send( PPSums, MAXPERIODS, MPI_FLOAT, BOSS, TAG_GATHER, MPI_COMM_WORLD );
 	}
 
 	// the BOSS receives the sums and adds them into the overall sums:
@@ -189,7 +192,7 @@ main( int argc, char *argv[ ] )
 				continue;
 
 			// the BOSS receives everyone else's sums:
-			MPI_Recv( tmpSums, ?????, MPI_FLOAT, ?????, TAG_GATHER, MPI_COMM_WORLD, &status );
+			MPI_Recv( tmpSums, MAXPERIODS, MPI_FLOAT, src, TAG_GATHER, MPI_COMM_WORLD, &status );
 			for( int s = 0; s < MAXPERIODS; s++ )
 				BigSums[s] += tmpSums[s];
 		}
