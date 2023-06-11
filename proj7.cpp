@@ -1,3 +1,8 @@
+// Mateo Estrada Jorge
+// June 10, 2023
+// Project 7
+// Fourier Analysis 
+
 
 // module  load  slurm 
 // module  load  openmpi
